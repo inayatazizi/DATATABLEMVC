@@ -97,7 +97,7 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
-
+**/wwwroot/bundles
 # Chutzpah Test files
 _Chutzpah*
 
@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/rems/Views/CaseFee/CancelOrBuyBack/Index.cshtml
+/rems/Views/CaseFee/CancelOrBuyBack/CanellationReport.cshtml
+
+*.DS_Store
+rems/appsettings.json
+rems/appsettings.json
+rems/appsettings.json
