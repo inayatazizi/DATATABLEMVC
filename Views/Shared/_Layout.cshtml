@@ -222,26 +222,305 @@
         })(window, document);
 
         $(document).ready(function () {
-            $('#datatable').dataTable({
-                "ajax": 'https://gist.githubusercontent.com/heiswayi/7fde241975ed8a80535a/raw/ff1caaeaf62bd6740ab7cafcd61f1215de173379/datatables-data.json',
-                "oLanguage": {
-                    "sStripClasses": "",
-                    "sSearch": "",
-                    "sSearchPlaceholder": "Enter any keyword here to filter...",
-                    "sInfo": "_START_ -_END_ of _TOTAL_",
-                    "sLengthMenu": '<span>Rows per page:</span><select class="browser-default">' +
-                        '<option value="10">10</option>' +
-                        '<option value="20">20</option>' +
-                        '<option value="30">30</option>' +
-                        '<option value="40">40</option>' +
-                        '<option value="50">50</option>' +
-                        '<option value="-1">All</option>' +
-                        '</select></div>'
-                },
-                bAutoWidth: false
+            $(document).ready(function () {
+                bindDatatable();
             });
+
+            function bindDatatable() {
+                datatable = $('#tblStudent')
+                    .DataTable({
+                        "sAjaxSource": "/Home/GetData",
+                        "bServerSide": true,
+                        "bProcessing": true,
+                        "bSearchable": true,
+                        "order": [[1, 'asc']],
+                        "language": {
+                            "emptyTable": "No record found.",
+                            "processing":
+                                '<i class="fa fa-spinner fa-spin fa-3x fa-fw" style="color:#2a2b2b;"></i><span class="sr-only">Loading...</span> '
+                        },
+                        "columns": [
+                            {
+                                "data": "name",
+                                "autoWidth": true,
+                                "searchable": true
+                            },
+                            {
+                                "data": "position",
+                                "autoWidth": true,
+                                "searchable": true
+                            },
+                            {
+                                "data": "location",
+                                "autoWidth": true,
+                                "searchable": true
+                            },
+                            {
+                                "data": "age",
+                                "autoWidth": true,
+                                "searchable": true
+                            }, {
+                                "data": "startDateString",
+                                "autoWidth": true,
+                                "searchable": true
+                            }, {
+                                "data": "salary",
+                                "autoWidth": true,
+                                "searchable": true
+                            },
+                        ]
+                    });
+            }
+
+
+            //$('#datatable').dataTable({
+            //    "ajax": 'home/GetUsers',
+            //    "oLanguage": {
+            //        "sStripClasses": "",
+            //        "sSearch": "",
+            //        "sSearchPlaceholder": "Enter any keyword here to filter...",
+            //        "sInfo": "_START_ -_END_ of _TOTAL_",
+            //        "sLengthMenu": '<span>Rows per page:</span><select class="browser-default">' +
+            //            '<option value="10">10</option>' +
+            //            '<option value="20">20</option>' +
+            //            '<option value="30">30</option>' +
+            //            '<option value="40">40</option>' +
+            //            '<option value="50">50</option>' +
+            //            '<option value="-1">All</option>' +
+            //            '</select></div>'
+            //    },
+            //    bAutoWidth: false
+            //});
+            //$(document).ready(function () {
+            //    $("#datatable").DataTable({
+            //        "processing": true,
+            //        "serverSide": true, // enabling server side
+            //        "filter": true, //set true for enabling searching
+            //        "ajax": {
+            //            "url": "/home/GetUsers",// ajax url to load content
+            //            "type": "POST", // type of method to call
+            //            "datatype": "json" // return datatype
+            //        },
+            //        "columns": [
+            //            { "data": "name", "name": "Name", "autoWidth": true }, // columns name and related settings
+            //            { "data": "position", "name": "Position", "autoWidth": true },
+            //            { "data": "office", "name": "Office", "autoWidth": true },
+            //            { "data": "location", "name": "Location", "autoWidth": true },
+            //            { "data": "salary", "name": "Salary", "autoWidth": true }
+                       
+            //        ]
+            //    });
+            //});
+            
         });
 
+            function goReport() {
+
+
+                if ($.fn.DataTable.isDataTable('#datatables')) {
+                    $('#datatables').DataTable().destroy();
+            }
+
+            oTable = null;
+                $.ajax({
+                    url: "/home/GetUsers",
+                    datatype: "JSON",
+                   
+                    type: "POST",
+                    beforeSend: function () {
+                        $(".searchBtn").prop('disabled', true);
+                        $(".resetBtn").prop('disabled', true);
+                        $(".showLoader").show();
+                    },
+                    success: function (data) {
+                        alert(data.result);
+                        var isSuccess = data.isSuccessfull;
+
+                        if (isSuccess) {
+
+                            $(".toggle-vis").attr('disabled', false)
+
+                            oTable = $('#datatables').DataTable({
+
+                                paging: false,
+                                searching: false,
+                              data: data.result,
+                                dom: 'Bfrtip',
+
+                              buttons: [
+
+                                  {
+                                      title: '@ViewBag.ReportTitle',
+                                      text: '<span style="color:white">Export Excel</span>',
+                                      extend: 'excelHtml5',
+                                      className: 'bg-success excelId'
+
+                                  },
+                                  {
+                                        title:'@ViewBag.ReportTitle',
+                                        text: '<span style="color:white">Print Pdf</span>',
+                                        extend: 'pdfHtml5',
+                                        message: '',
+                                      orientation: 'landscape',
+                                        download: 'open',
+                                      className: 'bg-primary pdfId',
+
+                                        customize: function (doc) {
+
+                                            doc.pageMargins = [10, 10, 10, 45];
+                                            doc.defaultStyle.fontSize = 7;
+                                            doc.styles.tableHeader.fontSize = 7;
+                                            doc.styles.title.fontSize = 14;
+
+                                            // Remove spaces around page title
+                                            doc.content[0].text = "";
+
+                                            var colCount = new Array();
+                                            k = 0;
+                                            $("#datatables").find('tbody tr:first-child td').each(function () {
+                                                if (k == 2 || k == 1) { colCount.push('*'); }
+                                                else { colCount.push('auto'); }
+                                                k++;
+                                            });
+                                            doc.content[1].table.widths = colCount;
+
+                                            (doc.content[1].table.body).forEach(function (value, index, array) {
+
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+                                                try { value[12].text = value[12].text.replace("<br>", ""); } catch { }
+
+
+
+
+
+                                            });
+
+
+ var dateToday =  '@DateTime.Now.Date.ToString("dd-MM-yyyy")';
+
+
+
+                                            // Create a footer
+                                            // Create a footer
+                                            doc['footer'] = (function (page, pages) {
+
+                                                return {
+
+
+
+                                                    columns: [
+
+                                                        {
+
+                                                            alignment: 'left',
+                                                            text: [{ text: "Grand City Head Office: ", bold: true }, companyAddress],
+                                                            margin: [10, 2, 0, 0]
+
+                                                        },
+                                                        {
+                                                            // This is the right column
+                                                            alignment: 'center',
+                                                            text: ['page ', { text: page.toString() }, ' of ', { text: pages.toString() }],
+                                                            margin: [10, 2, 0, 0]
+
+                                                        },
+                                                        {
+                                                            // This is the right column
+                                                            alignment: 'justify',
+                                                            text: [{ text: "Site Office: ", bold: true }, '', projectAddress],
+                                                            margin: [10, 2, 0, 0]
+
+                                                        },
+
+
+                                                    ],
+
+                                                }
+                                            });
+                                            // Styling the table: create style object
+                                            var objLayout = {};
+
+                                            // Horizontal line thickness
+                                            objLayout['hLineWidth'] = function (i) { return .5; };
+                                            // Vertikal line thickness
+                                            objLayout['vLineWidth'] = function (i) { return .5; };
+                                            // Horizontal line color
+                                            objLayout['hLineColor'] = function (i) { return '#aaa'; };
+                                            // Vertical line color
+                                            objLayout['vLineColor'] = function (i) { return '#aaa'; };
+                                            // Left padding of the cell
+                                            objLayout['paddingLeft'] = function (i) { return 4; };
+                                            // Right padding of the cell
+                                            objLayout['paddingRight'] = function (i) { return 4; };
+                                            // Inject the object in the document
+                                            doc.content[1].layout = objLayout;
+
+                                            doc.content.reverse();
+
+                                        },
+                                        exportOptions: {
+                                            stripHtml: false,
+                                            columns: ':visible',
+                                            search: 'applied'
+                                        }
+
+                                    }
+                                  ],
+                                bSort: false,
+                              columns: [
+                                  { data: 'name', bSortable: false, className: 'text-left' },
+                                  { data: 'position', bSortable: false, className: 'text-left' },
+                                  { data: 'office', bSortable: false, className: 'text-left' },
+                                  { data: 'location', bSortable: false, className: 'text-left' },
+                                  { data: 'age', bSortable: false, className: 'text-left' },
+                                  { data: 'startDate', bSortable: false, className: 'text-left' },
+                                  { data: 'startDateString', bSortable: false, className: 'text-left' },
+
+                                  { data: 'salary', bSortable: false, className: 'text-left' },
+                                 
+                              ],
+                            });
+                        }
+
+                    },
+                    complete: function () {
+                        $(".showLoader").hide();
+                        $(".searchBtn").prop('disabled',false);
+                        $(".resetBtn").prop('disabled', false);
+
+
+
+                    }
+                });
+
+
+        }
 
     </script>
 
